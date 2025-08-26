@@ -1,0 +1,67 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Brand {
+  id            String      @id @default(cuid())
+  name          String
+  slug          String      @unique
+  shopDomain    String
+  apiKey        String
+  apiPassword   String
+  commissionPct Float
+  discountPct   Float
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  affiliates    Affiliate[]
+  coupons       Coupon[]
+  orders        Order[] // <<< relação oposta adicionada
+}
+
+model Affiliate {
+  id        String   @id @default(cuid())
+  email     String
+  name      String?
+  code      String   @unique
+  brandId   String
+  brand     Brand    @relation(fields: [brandId], references: [id])
+  createdAt DateTime @default(now())
+  clicks    Click[]
+  orders    Order[]
+  coupons   Coupon[] // <<< relação oposta adicionada
+}
+
+model Coupon {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  brandId     String
+  brand       Brand     @relation(fields: [brandId], references: [id])
+  affiliateId String    @unique
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
+}
+
+model Click {
+  id          String    @id @default(cuid())
+  affiliateId String
+  affiliate   Affiliate @relation(fields: [affiliateId], references: [id])
+  userAgent   String?
+  ip          String?
+  createdAt   DateTime  @default(now())
+}
+
+model Order {
+  id             String     @id @default(cuid())
+  brandId        String
+  brand          Brand      @relation(fields: [brandId], references: [id])
+  affiliateId    String?
+  affiliate      Affiliate? @relation(fields: [affiliateId], references: [id])
+  shopifyOrderId String     @unique
+  subtotal       Float
+  discountCode   String?
+  createdAt      DateTime   @default(now())
+}
